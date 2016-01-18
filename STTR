@@ -1,0 +1,63 @@
+import re
+
+#Funktion: liest lexikon-file
+#parameter: dateiname
+#rückgabe: lexikon; Lexikonterm -> (lemma,wortart)
+#lexikon: variante1 ... varianteN Lemma Wortart
+def readLexicon(file):
+    varianten = {}
+    try:
+        lexiconfile = open(file, encoding="utf-8")
+        lexicon = lexiconfile.readlines()      
+        for line in lexicon:
+            liste = line.split('\t')
+            lemma = re.sub(r' ','',liste[-2])
+            wortart = liste[-1]
+            for lexem in liste[:-1]:
+                varianten[re.sub(r' ','',lexem)] = (lemma,wortart)
+        return varianten
+    except:
+        print("Error while reading Lexicon")
+#Funktion: bereinigt ein Wort von Sonderzeichen und führt lemmatisierung mit Lexikon durch
+#parameter: das zu bereinigende Wort, Lexikon (optional)
+#Rückgabe: das bereinigte (evt. lemmatisierte) Wort
+def cleaning(word,lexicon=0):
+    cleaned_word = "".join(c for c in word if c not in ('!',' )','(','.',':',' ', '?','/',' '))
+
+    #wenn lexikon vorhanden:
+    if lexicon != 0:
+        # wenn das wort im lexikon ist
+        if cleaned_word in lexicon:
+            #wird das wort durch das im lexikon gespeicherte lemma ersetzt
+            cleaned_word = lexicon[cleaned_word][0]
+    return cleaned_word
+    
+    # Hier geht mein Teil los.
+    # Zunächst erfolgt die Standardisierung, indem der Text in gleich große Chunks zerlegt wird.
+    # Der Eingabestring in der Variablen "text" wird in beliebig lange Chunks zerlegt, hier Chunks der Länge 4 s.u.
+def sliceTextIntoChunks(text, chunksize): # Funktion, um Text in Chunkes zu zerlegen. Variablen: text, chunksize
+	wordlist = text.split(' ') # bei Strings integrierte Funktion .split
+	chunks = []
+	for i in range(0, len(wordlist), chunksize): # Funktion range() gibt eine Liste mit Elementen zurück. Von 0 bis Länge der wordlist in Schrittweite chunksize, also z.B. [0,4,8]
+		chunk = wordlist[i:i + chunksize] # Variable chunk wird definiert durch Intervall aus der Wortliste im Bereich i bis i + chunksize
+		chunks.append(chunk) # Funktion append hängt gerade definierten chunk an chunks an
+	return chunks
+
+# Hier wird der TTR-Wert berechnet
+def calculateTTR(text, lexikon_file): # Variablen: Text und Lexikondatei
+	lexikon = readLexicon(lexikon_file) # Lexikon wird eingelesen
+	types = set() # types leere Menge und tokens auf 0
+	token = 0
+	for word in text:
+		types.add(cleaning(word, lexikon)) # rufe Methode cleaning auf mit Parametern word und Lexikon
+		token = token + 1  # token wird immer um 1 erhöht
+	return len(types)/token 
+########################################################################################
+# Beispieltext und Berechnung
+
+text = "Dies ist ein toller Test Test!"
+#text = open("C:\\Users\\Katharina\\Desktop\\Projektseminar\\TTR selbst\\18-01\\Testtext.txt", encoding="utf-8").read()
+chunks = sliceTextIntoChunks(text, 4)
+
+for chunk in chunks:
+	print(calculateTTR(chunk, "C:\\Users\\Katharina\\Desktop\\Projektseminar\\TTR selbst\\lexikon_tagged.tsv"))
